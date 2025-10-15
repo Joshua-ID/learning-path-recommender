@@ -2,9 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #__next {
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --gradient-from: #2563eb;
+  --gradient-to: #7c3aed;
+}
+
+html,
+body,
+#__next {
   height: 100%;
 }
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+
+  .bg-grid-slate-100 {
+    background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+      linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+    background-size: 4rem 4rem;
+  }
 }

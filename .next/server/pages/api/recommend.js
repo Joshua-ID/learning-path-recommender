@@ -1,25 +1,356 @@
 "use strict";
-/*
- * ATTENTION: An "eval-source-map" devtool has been used.
- * This devtool is neither made for production nor for readable output files.
- * It uses "eval()" calls to create a separate source file with attached SourceMaps in the browser devtools.
- * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
- * or disable the default devtool with "devtool: false".
- * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
- */
 (() => {
 var exports = {};
-exports.id = "pages/api/recommend";
-exports.ids = ["pages/api/recommend"];
+exports.id = 57;
+exports.ids = [57];
 exports.modules = {
 
-/***/ "(api)/./pages/api/recommend.js":
-/*!********************************!*\
-  !*** ./pages/api/recommend.js ***!
-  \********************************/
+/***/ 323:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ handler)\n/* harmony export */ });\n// Server-side API route to call an LLM and return structured learning paths.\n// This example uses OpenAI's API via fetch. Set process.env.OPENAI_API_KEY.\nasync function handler(req, res) {\n    if (req.method !== \"POST\") {\n        return res.status(405).json({\n            error: \"Only POST\"\n        });\n    }\n    const { skills, goal, experience_level } = req.body || {};\n    if (!skills || !goal) {\n        return res.status(400).json({\n            error: \"Missing skills or goal\"\n        });\n    }\n    // Build a prompt for the LLM to return JSON containing \"paths\": [{title, duration_weeks, steps: [{title, description, resources: []}], level}]\n    const prompt = `\nYou are an expert career coach and must respond ONLY with valid JSON.\nDo not include explanations, introductions, or markdown formatting.\n\nInput:\nSKILLS: ${Array.isArray(skills) ? skills.join(\", \") : skills}\nGOAL: ${goal}\nEXPERIENCE_LEVEL: ${experience_level || \"intermediate\"}\n\nOutput JSON structure:\n{\n  \"paths\": [\n    {\n      \"title\": \"string\",\n      \"level\": \"string\",\n      \"duration_weeks\": number,\n      \"steps\": [\n        {\n          \"title\": \"string\",\n          \"description\": \"string\",\n          \"estimated_time_hours\": number,\n          \"resources\": [{\"name\": \"string\", \"url\": \"string\"}],\n          \"why\": \"string\"\n        }\n      ]\n    }\n  ]\n}\nReturn only valid JSON.\n`;\n    try {\n        const openaiKey = process.env.OPENAI_API_KEY;\n        if (!openaiKey) {\n            // Return a mocked response for local testing without a key\n            const mock = {\n                paths: [\n                    {\n                        title: \"Frontend React + Next.js Path\",\n                        level: \"intermediate\",\n                        duration_weeks: 8,\n                        steps: [\n                            {\n                                title: \"Core React Patterns\",\n                                description: \"Hooks, component design\",\n                                estimated_time_hours: 10,\n                                resources: [\n                                    {\n                                        name: \"React Docs\",\n                                        url: \"https://react.dev\"\n                                    }\n                                ],\n                                why: \"Foundation for modern frontend\"\n                            },\n                            {\n                                title: \"Next.js 13+ App Router\",\n                                description: \"Routing, server components\",\n                                estimated_time_hours: 12,\n                                resources: [\n                                    {\n                                        name: \"Next.js Docs\",\n                                        url: \"https://nextjs.org\"\n                                    }\n                                ],\n                                why: \"Build fullstack with SSR/ISR\"\n                            }\n                        ]\n                    }\n                ]\n            };\n            return res.status(200).json(mock);\n        }\n        const apiRes = await fetch(\"https://api.openai.com/v1/chat/completions\", {\n            method: \"POST\",\n            headers: {\n                \"Content-Type\": \"application/json\",\n                Authorization: `Bearer ${openaiKey}`\n            },\n            body: JSON.stringify({\n                model: \"gpt-4o-mini\",\n                messages: [\n                    {\n                        role: \"system\",\n                        content: \"You are a helpful career coach that outputs strict JSON.\"\n                    },\n                    {\n                        role: \"user\",\n                        content: prompt\n                    }\n                ],\n                temperature: 0.2,\n                max_tokens: 800\n            })\n        });\n        const json = await apiRes.json();\n        const txt = json.choices?.[0]?.message?.content || \"\";\n        // Attempt to parse JSON from model output\n        let parsed = {};\n        try {\n            parsed = JSON.parse(txt);\n        } catch (e) {\n            // Try to extract JSON substring safely\n            const match = txt.match(/\\{[\\s\\S]*\\}/);\n            if (match) {\n                try {\n                    parsed = JSON.parse(match[0]);\n                } catch (err2) {\n                    console.warn(\"Secondary parse failed\", err2);\n                    throw new Error(\"Model returned invalid JSON\");\n                }\n            } else {\n                console.warn(\"No JSON block detected\");\n                throw new Error(\"Could not parse model output as JSON\");\n            }\n        }\n        if (!parsed.paths || !Array.isArray(parsed.paths)) {\n            throw new Error('Invalid format — missing \"paths\" array');\n        }\n        return res.status(200).json(parsed);\n    } catch (err) {\n        console.error(err);\n        return res.status(500).json({\n            error: err.message || \"Server error\"\n        });\n    }\n}\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,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O1lBQ2xCO1FBQ0Y7UUFFQSxJQUFJLENBQUNQLE9BQU8xQixLQUFLLElBQUksQ0FBQ1IsTUFBTUMsT0FBTyxDQUFDaUMsT0FBTzFCLEtBQUssR0FBRztZQUNqRCxNQUFNLElBQUlpQyxNQUFNO1FBQ2xCO1FBRUEsT0FBT25ELElBQUlFLE1BQU0sQ0FBQyxLQUFLQyxJQUFJLENBQUN5QztJQUM5QixFQUFFLE9BQU9RLEtBQUs7UUFDWkgsUUFBUTdDLEtBQUssQ0FBQ2dEO1FBQ2QsT0FBT3BELElBQUlFLE1BQU0sQ0FBQyxLQUFLQyxJQUFJLENBQUM7WUFBRUMsT0FBT2dELElBQUlULE9BQU8sSUFBSTtRQUFlO0lBQ3JFO0FBQ0YiLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9sZWFybmluZy1wYXRoLXJlY29tbWVuZGVyLy4vcGFnZXMvYXBpL3JlY29tbWVuZC5qcz81Mjg3Il0sInNvdXJjZXNDb250ZW50IjpbIi8vIFNlcnZlci1zaWRlIEFQSSByb3V0ZSB0byBjYWxsIGFuIExMTSBhbmQgcmV0dXJuIHN0cnVjdHVyZWQgbGVhcm5pbmcgcGF0aHMuXG4vLyBUaGlzIGV4YW1wbGUgdXNlcyBPcGVuQUkncyBBUEkgdmlhIGZldGNoLiBTZXQgcHJvY2Vzcy5lbnYuT1BFTkFJX0FQSV9LRVkuXG5cbmV4cG9ydCBkZWZhdWx0IGFzeW5jIGZ1bmN0aW9uIGhhbmRsZXIocmVxLCByZXMpIHtcbiAgaWYgKHJlcS5tZXRob2QgIT09IFwiUE9TVFwiKSB7XG4gICAgcmV0dXJuIHJlcy5zdGF0dXMoNDA1KS5qc29uKHsgZXJyb3I6IFwiT25seSBQT1NUXCIgfSk7XG4gIH1cbiAgY29uc3QgeyBza2lsbHMsIGdvYWwsIGV4cGVyaWVuY2VfbGV2ZWwgfSA9IHJlcS5ib2R5IHx8IHt9O1xuICBpZiAoIXNraWxscyB8fCAhZ29hbCkge1xuICAgIHJldHVybiByZXMuc3RhdHVzKDQwMCkuanNvbih7IGVycm9yOiBcIk1pc3Npbmcgc2tpbGxzIG9yIGdvYWxcIiB9KTtcbiAgfVxuXG4gIC8vIEJ1aWxkIGEgcHJvbXB0IGZvciB0aGUgTExNIHRvIHJldHVybiBKU09OIGNvbnRhaW5pbmcgXCJwYXRoc1wiOiBbe3RpdGxlLCBkdXJhdGlvbl93ZWVrcywgc3RlcHM6IFt7dGl0bGUsIGRlc2NyaXB0aW9uLCByZXNvdXJjZXM6IFtdfV0sIGxldmVsfV1cbiAgY29uc3QgcHJvbXB0ID0gYFxuWW91IGFyZSBhbiBleHBlcnQgY2FyZWVyIGNvYWNoIGFuZCBtdXN0IHJlc3BvbmQgT05MWSB3aXRoIHZhbGlkIEpTT04uXG5EbyBub3QgaW5jbHVkZSBleHBsYW5hdGlvbnMsIGludHJvZHVjdGlvbnMsIG9yIG1hcmtkb3duIGZvcm1hdHRpbmcuXG5cbklucHV0OlxuU0tJTExTOiAke0FycmF5LmlzQXJyYXkoc2tpbGxzKSA/IHNraWxscy5qb2luKFwiLCBcIikgOiBza2lsbHN9XG5HT0FMOiAke2dvYWx9XG5FWFBFUklFTkNFX0xFVkVMOiAke2V4cGVyaWVuY2VfbGV2ZWwgfHwgXCJpbnRlcm1lZGlhdGVcIn1cblxuT3V0cHV0IEpTT04gc3RydWN0dXJlOlxue1xuICBcInBhdGhzXCI6IFtcbiAgICB7XG4gICAgICBcInRpdGxlXCI6IFwic3RyaW5nXCIsXG4gICAgICBcImxldmVsXCI6IFwic3RyaW5nXCIsXG4gICAgICBcImR1cmF0aW9uX3dlZWtzXCI6IG51bWJlcixcbiAgICAgIFwic3RlcHNcIjogW1xuICAgICAgICB7XG4gICAgICAgICAgXCJ0aXRsZVwiOiBcInN0cmluZ1wiLFxuICAgICAgICAgIFwiZGVzY3JpcHRpb25cIjogXCJzdHJpbmdcIixcbiAgICAgICAgICBcImVzdGltYXRlZF90aW1lX2hvdXJzXCI6IG51bWJlcixcbiAgICAgICAgICBcInJlc291cmNlc1wiOiBbe1wibmFtZVwiOiBcInN0cmluZ1wiLCBcInVybFwiOiBcInN0cmluZ1wifV0sXG4gICAgICAgICAgXCJ3aHlcIjogXCJzdHJpbmdcIlxuICAgICAgICB9XG4gICAgICBdXG4gICAgfVxuICBdXG59XG5SZXR1cm4gb25seSB2YWxpZCBKU09OLlxuYDtcblxuICB0cnkge1xuICAgIGNvbnN0IG9wZW5haUtleSA9IHByb2Nlc3MuZW52Lk9QRU5BSV9BUElfS0VZO1xuICAgIGlmICghb3BlbmFpS2V5KSB7XG4gICAgICAvLyBSZXR1cm4gYSBtb2NrZWQgcmVzcG9uc2UgZm9yIGxvY2FsIHRlc3Rpbmcgd2l0aG91dCBhIGtleVxuICAgICAgY29uc3QgbW9jayA9IHtcbiAgICAgICAgcGF0aHM6IFtcbiAgICAgICAgICB7XG4gICAgICAgICAgICB0aXRsZTogXCJGcm9udGVuZCBSZWFjdCArIE5leHQuanMgUGF0aFwiLFxuICAgICAgICAgICAgbGV2ZWw6IFwiaW50ZXJtZWRpYXRlXCIsXG4gICAgICAgICAgICBkdXJhdGlvbl93ZWVrczogOCxcbiAgICAgICAgICAgIHN0ZXBzOiBbXG4gICAgICAgICAgICAgIHtcbiAgICAgICAgICAgICAgICB0aXRsZTogXCJDb3JlIFJlYWN0IFBhdHRlcm5zXCIsXG4gICAgICAgICAgICAgICAgZGVzY3JpcHRpb246IFwiSG9va3MsIGNvbXBvbmVudCBkZXNpZ25cIixcbiAgICAgICAgICAgICAgICBlc3RpbWF0ZWRfdGltZV9ob3VyczogMTAsXG4gICAgICAgICAgICAgICAgcmVzb3VyY2VzOiBbeyBuYW1lOiBcIlJlYWN0IERvY3NcIiwgdXJsOiBcImh0dHBzOi8vcmVhY3QuZGV2XCIgfV0sXG4gICAgICAgICAgICAgICAgd2h5OiBcIkZvdW5kYXRpb24gZm9yIG1vZGVybiBmcm9udGVuZFwiLFxuICAgICAgICAgICAgICB9LFxuICAgICAgICAgICAgICB7XG4gICAgICAgICAgICAgICAgdGl0bGU6IFwiTmV4dC5qcyAxMysgQXBwIFJvdXRlclwiLFxuICAgICAgICAgICAgICAgIGRlc2NyaXB0aW9uOiBcIlJvdXRpbmcsIHNlcnZlciBjb21wb25lbnRzXCIsXG4gICAgICAgICAgICAgICAgZXN0aW1hdGVkX3RpbWVfaG91cnM6IDEyLFxuICAgICAgICAgICAgICAgIHJlc291cmNlczogW1xuICAgICAgICAgICAgICAgICAgeyBuYW1lOiBcIk5leHQuanMgRG9jc1wiLCB1cmw6IFwiaHR0cHM6Ly9uZXh0anMub3JnXCIgfSxcbiAgICAgICAgICAgICAgICBdLFxuICAgICAgICAgICAgICAgIHdoeTogXCJCdWlsZCBmdWxsc3RhY2sgd2l0aCBTU1IvSVNSXCIsXG4gICAgICAgICAgICAgIH0sXG4gICAgICAgICAgICBdLFxuICAgICAgICAgIH0sXG4gICAgICAgIF0sXG4gICAgICB9O1xuICAgICAgcmV0dXJuIHJlcy5zdGF0dXMoMjAwKS5qc29uKG1vY2spO1xuICAgIH1cblxuICAgIGNvbnN0IGFwaVJlcyA9IGF3YWl0IGZldGNoKFwiaHR0cHM6Ly9hcGkub3BlbmFpLmNvbS92MS9jaGF0L2NvbXBsZXRpb25zXCIsIHtcbiAgICAgIG1ldGhvZDogXCJQT1NUXCIsXG4gICAgICBoZWFkZXJzOiB7XG4gICAgICAgIFwiQ29udGVudC1UeXBlXCI6IFwiYXBwbGljYXRpb24vanNvblwiLFxuICAgICAgICBBdXRob3JpemF0aW9uOiBgQmVhcmVyICR7b3BlbmFpS2V5fWAsXG4gICAgICB9LFxuICAgICAgYm9keTogSlNPTi5zdHJpbmdpZnkoe1xuICAgICAgICBtb2RlbDogXCJncHQtNG8tbWluaVwiLCAvLyBwbGFjZWhvbGRlciAtIGNoYW5nZSB0byBhdmFpbGFibGUgbW9kZWxcbiAgICAgICAgbWVzc2FnZXM6IFtcbiAgICAgICAgICB7XG4gICAgICAgICAgICByb2xlOiBcInN5c3RlbVwiLFxuICAgICAgICAgICAgY29udGVudDogXCJZb3UgYXJlIGEgaGVscGZ1bCBjYXJlZXIgY29hY2ggdGhhdCBvdXRwdXRzIHN0cmljdCBKU09OLlwiLFxuICAgICAgICAgIH0sXG4gICAgICAgICAgeyByb2xlOiBcInVzZXJcIiwgY29udGVudDogcHJvbXB0IH0sXG4gICAgICAgIF0sXG4gICAgICAgIHRlbXBlcmF0dXJlOiAwLjIsXG4gICAgICAgIG1heF90b2tlbnM6IDgwMCxcbiAgICAgIH0pLFxuICAgIH0pO1xuICAgIGNvbnN0IGpzb24gPSBhd2FpdCBhcGlSZXMuanNvbigpO1xuICAgIGNvbnN0IHR4dCA9IGpzb24uY2hvaWNlcz8uWzBdPy5tZXNzYWdlPy5jb250ZW50IHx8IFwiXCI7XG4gICAgLy8gQXR0ZW1wdCB0byBwYXJzZSBKU09OIGZyb20gbW9kZWwgb3V0cHV0XG4gICAgbGV0IHBhcnNlZCA9IHt9O1xuXG4gICAgdHJ5IHtcbiAgICAgIHBhcnNlZCA9IEpTT04ucGFyc2UodHh0KTtcbiAgICB9IGNhdGNoIChlKSB7XG4gICAgICAvLyBUcnkgdG8gZXh0cmFjdCBKU09OIHN1YnN0cmluZyBzYWZlbHlcbiAgICAgIGNvbnN0IG1hdGNoID0gdHh0Lm1hdGNoKC9cXHtbXFxzXFxTXSpcXH0vKTtcbiAgICAgIGlmIChtYXRjaCkge1xuICAgICAgICB0cnkge1xuICAgICAgICAgIHBhcnNlZCA9IEpTT04ucGFyc2UobWF0Y2hbMF0pO1xuICAgICAgICB9IGNhdGNoIChlcnIyKSB7XG4gICAgICAgICAgY29uc29sZS53YXJuKFwiU2Vjb25kYXJ5IHBhcnNlIGZhaWxlZFwiLCBlcnIyKTtcbiAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoXCJNb2RlbCByZXR1cm5lZCBpbnZhbGlkIEpTT05cIik7XG4gICAgICAgIH1cbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIGNvbnNvbGUud2FybihcIk5vIEpTT04gYmxvY2sgZGV0ZWN0ZWRcIik7XG4gICAgICAgIHRocm93IG5ldyBFcnJvcihcIkNvdWxkIG5vdCBwYXJzZSBtb2RlbCBvdXRwdXQgYXMgSlNPTlwiKTtcbiAgICAgIH1cbiAgICB9XG5cbiAgICBpZiAoIXBhcnNlZC5wYXRocyB8fCAhQXJyYXkuaXNBcnJheShwYXJzZWQucGF0aHMpKSB7XG4gICAgICB0aHJvdyBuZXcgRXJyb3IoJ0ludmFsaWQgZm9ybWF0IOKAlCBtaXNzaW5nIFwicGF0aHNcIiBhcnJheScpO1xuICAgIH1cblxuICAgIHJldHVybiByZXMuc3RhdHVzKDIwMCkuanNvbihwYXJzZWQpO1xuICB9IGNhdGNoIChlcnIpIHtcbiAgICBjb25zb2xlLmVycm9yKGVycik7XG4gICAgcmV0dXJuIHJlcy5zdGF0dXMoNTAwKS5qc29uKHsgZXJyb3I6IGVyci5tZXNzYWdlIHx8IFwiU2VydmVyIGVycm9yXCIgfSk7XG4gIH1cbn1cbiJdLCJuYW1lcyI6WyJoYW5kbGVyIiwicmVxIiwicmVzIiwibWV0aG9kIiwic3RhdHVzIiwianNvbiIsImVycm9yIiwic2tpbGxzIiwiZ29hbCIsImV4cGVyaWVuY2VfbGV2ZWwiLCJib2R5IiwicHJvbXB0IiwiQXJyYXkiLCJpc0FycmF5Iiwiam9pbiIsIm9wZW5haUtleSIsInByb2Nlc3MiLCJlbnYiLCJPUEVOQUlfQVBJX0tFWSIsIm1vY2siLCJwYXRocyIsInRpdGxlIiwibGV2ZWwiLCJkdXJhdGlvbl93ZWVrcyIsInN0ZXBzIiwiZGVzY3JpcHRpb24iLCJlc3RpbWF0ZWRfdGltZV9ob3VycyIsInJlc291cmNlcyIsIm5hbWUiLCJ1cmwiLCJ3aHkiLCJhcGlSZXMiLCJmZXRjaCIsImhlYWRlcnMiLCJBdXRob3JpemF0aW9uIiwiSlNPTiIsInN0cmluZ2lmeSIsIm1vZGVsIiwibWVzc2FnZXMiLCJyb2xlIiwiY29udGVudCIsInRlbXBlcmF0dXJlIiwibWF4X3Rva2VucyIsInR4dCIsImNob2ljZXMiLCJtZXNzYWdlIiwicGFyc2VkIiwicGFyc2UiLCJlIiwibWF0Y2giLCJlcnIyIiwiY29uc29sZSIsIndhcm4iLCJFcnJvciIsImVyciJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///(api)/./pages/api/recommend.js\n");
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ handler)
+/* harmony export */ });
+// pages/api/recommend.js
+// Configuration constants
+const API_CONFIG = {
+    openai: {
+        url: "https://api.openai.com/v1/chat/completions",
+        models: {
+            primary: "gpt-3.5-turbo",
+            fallback: "gpt-3.5-turbo"
+        }
+    },
+    openrouter: {
+        url: "https://openrouter.ai/api/v1/chat/completions",
+        models: {
+            primary: "openai/gpt-3.5-turbo",
+            fallback: "meta-llama/llama-3.1-8b-instruct:free"
+        },
+        headers: {
+            "HTTP-Referer": "https://localhost:3000",
+            "X-Title": "Learning Path Recommender"
+        }
+    }
+};
+// Function calling schema (reusable)
+const LEARNING_PATH_FUNCTION_SCHEMA = {
+    name: "generate_learning_paths",
+    description: "Generate a structured learning plan with paths and steps",
+    parameters: {
+        type: "object",
+        properties: {
+            paths: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        title: {
+                            type: "string"
+                        },
+                        level: {
+                            type: "string"
+                        },
+                        duration_weeks: {
+                            type: "number"
+                        },
+                        steps: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    title: {
+                                        type: "string"
+                                    },
+                                    description: {
+                                        type: "string"
+                                    },
+                                    estimated_time_hours: {
+                                        type: "number"
+                                    },
+                                    resources: {
+                                        type: "array",
+                                        items: {
+                                            type: "object",
+                                            properties: {
+                                                name: {
+                                                    type: "string"
+                                                },
+                                                url: {
+                                                    type: "string"
+                                                }
+                                            },
+                                            required: [
+                                                "name",
+                                                "url"
+                                            ]
+                                        }
+                                    },
+                                    why: {
+                                        type: "string"
+                                    }
+                                },
+                                required: [
+                                    "title",
+                                    "description",
+                                    "why"
+                                ]
+                            }
+                        }
+                    },
+                    required: [
+                        "title",
+                        "level",
+                        "steps"
+                    ]
+                }
+            }
+        },
+        required: [
+            "paths"
+        ]
+    }
+};
+// Helper functions
+function getApiKeys() {
+    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
+    return {
+        OPENAI_KEY,
+        OPENROUTER_KEY
+    };
+}
+function createPrompt(skills, goal, experience_level) {
+    return `
+You are an expert AI career coach specializing in creating personalized learning paths.
+Generate a structured, actionable learning plan for the following user:
+
+CURRENT SKILLS: ${Array.isArray(skills) ? skills.join(", ") : skills}
+DESIRED GOAL: ${goal}
+EXPERIENCE LEVEL: ${experience_level || "intermediate"}
+
+CRITICAL REQUIREMENTS:
+- Return exactly 1-2 learning paths maximum
+- Each path must have 3-5 concrete, actionable steps
+- Include realistic time estimates (hours and weeks)
+- Provide genuine, useful resource links (not placeholder URLs)
+- Focus on practical, project-based learning
+- Explain the "why" behind each step for motivation
+
+FORMAT: Structured JSON with paths containing steps with resources.
+`;
+}
+// mock response incase api fails
+function createMockResponse(skills, goal, experience_level) {
+    return {
+        paths: [
+            {
+                title: `Personalized ${goal} Mastery Path`,
+                level: experience_level || "intermediate",
+                duration_weeks: 8,
+                steps: [
+                    {
+                        title: `Master ${skills} Core Concepts`,
+                        description: `Build a strong foundation in ${skills} through practical exercises and fundamental concepts.`,
+                        estimated_time_hours: 15,
+                        resources: [
+                            {
+                                name: "MDN Web Docs",
+                                url: "https://developer.mozilla.org"
+                            },
+                            {
+                                name: "Official Documentation",
+                                url: "https://example.com/docs"
+                            }
+                        ],
+                        why: "Solid fundamentals enable advanced learning and problem-solving."
+                    },
+                    {
+                        title: "Hands-on Project Development",
+                        description: "Apply your skills by building real-world projects that demonstrate practical application.",
+                        estimated_time_hours: 20,
+                        resources: [
+                            {
+                                name: "Project Ideas Repository",
+                                url: "https://github.com/topics/learning-projects"
+                            },
+                            {
+                                name: "CodeSandbox",
+                                url: "https://codesandbox.io"
+                            }
+                        ],
+                        why: "Project-based learning reinforces concepts and builds portfolio pieces."
+                    },
+                    {
+                        title: "Advanced Patterns & Best Practices",
+                        description: "Learn industry standards, optimization techniques, and professional development workflows.",
+                        estimated_time_hours: 12,
+                        resources: [
+                            {
+                                name: "Best Practices Guide",
+                                url: "https://github.com/goldbergyoni/javascript-best-practices"
+                            },
+                            {
+                                name: "Patterns Library",
+                                url: "https://www.patterns.dev"
+                            }
+                        ],
+                        why: "Mastering advanced concepts ensures professional-level competency and efficiency."
+                    }
+                ]
+            }
+        ]
+    };
+}
+async function callAIProvider(provider, apiKey, prompt, useFunctionCalling = true) {
+    const config = API_CONFIG[provider];
+    const requestBody = {
+        model: config.models.primary,
+        messages: [
+            {
+                role: "system",
+                content: "You are an expert career coach. Generate structured, actionable learning paths in valid JSON format."
+            },
+            {
+                role: "user",
+                content: prompt
+            }
+        ],
+        temperature: 0.4,
+        max_tokens: 1500
+    };
+    if (useFunctionCalling && provider === "openai") {
+        requestBody.functions = [
+            LEARNING_PATH_FUNCTION_SCHEMA
+        ];
+        requestBody.function_call = {
+            name: "generate_learning_paths"
+        };
+    }
+    const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        ...config.headers || {}
+    };
+    try {
+        const response = await fetch(config.url, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(requestBody)
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        const data = await response.json();
+        if (data.error) {
+            throw new Error(data.error.message || `API error from ${provider}`);
+        }
+        return parseAIResponse(data, provider);
+    } catch (error) {
+        console.error(`API call failed:`, error.message);
+        throw error;
+    }
+}
+function parseAIResponse(data, provider) {
+    // Try function call response first
+    if (data.choices?.[0]?.message?.function_call?.arguments) {
+        const parsed = JSON.parse(data.choices[0].message.function_call.arguments);
+        if (isValidResponse(parsed)) return parsed;
+    }
+    // Try direct content response
+    if (data.choices?.[0]?.message?.content) {
+        try {
+            const content = data.choices[0].message.content;
+            // Extract JSON if it's wrapped in code blocks
+            const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/{[\s\S]*}/);
+            const jsonString = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content;
+            const parsed = JSON.parse(jsonString);
+            if (isValidResponse(parsed)) return parsed;
+        } catch (parseError) {
+            console.warn(`${provider} JSON parse failed, using structured fallback`);
+        }
+    }
+    // Final fallback
+    throw new Error(`Invalid response format from ${provider}`);
+}
+function isValidResponse(result) {
+    return result && result.paths && Array.isArray(result.paths) && result.paths.length > 0 && result.paths[0].steps && Array.isArray(result.paths[0].steps) && result.paths[0].steps.length >= 2;
+}
+// Main API handler
+async function handler(req, res) {
+    // Set timeout for long-running requests
+    res.setTimeout(30000, ()=>{});
+    try {
+        // Validate request method
+        if (req.method !== "POST") {
+            return res.status(405).json({
+                error: "Method not allowed. Use POST."
+            });
+        }
+        // Validate request body
+        const { skills, goal, experience_level } = req.body || {};
+        if (!skills || !goal) {
+            return res.status(400).json({
+                error: "Missing required fields",
+                required: [
+                    "skills",
+                    "goal"
+                ],
+                received: {
+                    skills: !!skills,
+                    goal: !!goal
+                }
+            });
+        }
+        // Get API keys from environment
+        const { OPENAI_KEY, OPENROUTER_KEY } = getApiKeys();
+        const hasValidKeys = OPENAI_KEY || OPENROUTER_KEY;
+        if (!hasValidKeys) {
+            console.warn("No API keys found, using mock data");
+            const mockResponse = createMockResponse(skills, goal, experience_level);
+            return res.status(200).json(mockResponse);
+        }
+        const prompt = createPrompt(skills, goal, experience_level);
+        let result;
+        // Try providers in order of preference
+        const providers = [
+            {
+                name: "openai",
+                key: OPENAI_KEY,
+                useFunctionCalling: true
+            },
+            {
+                name: "openrouter",
+                key: OPENROUTER_KEY,
+                useFunctionCalling: false
+            }
+        ];
+        for (const provider of providers){
+            if (provider.key && !result) {
+                try {
+                    result = await callAIProvider(provider.name, provider.key, prompt, provider.useFunctionCalling);
+                    break; // Exit loop if successful
+                } catch (error) {
+                    console.warn(`${provider.name} failed:`, error.message);
+                }
+            }
+        }
+        if (!result) {
+            result = createMockResponse(skills, goal, experience_level);
+        }
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Unexpected error in API handler:", error);
+        return res.status(500).json({
+            error: "Internal server error",
+            message: error.message,
+            fallback_used: true
+        });
+    }
+}
+
 
 /***/ })
 
@@ -30,7 +361,7 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 var __webpack_require__ = require("../../webpack-api-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = (__webpack_exec__("(api)/./pages/api/recommend.js"));
+var __webpack_exports__ = (__webpack_exec__(323));
 module.exports = __webpack_exports__;
 
 })();

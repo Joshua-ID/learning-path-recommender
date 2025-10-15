@@ -1,24 +1,44 @@
-export default function PathCard({ path }) {
+export default function PathCard({ path, index }) {
   return (
-    <article className="bg-white p-4 rounded-md shadow">
-      <h3 className="text-xl font-semibold text-sky-900">{path.title}</h3>
-      <div className="text-sm text-sky-600">Level: {path.level} • Duration: {path.duration_weeks} weeks</div>
-      <ol className="mt-3 space-y-3">
-        {path.steps?.map((s, i) => (
-          <li key={i} className="border-l-2 border-sky-200 pl-3">
-            <div className="font-medium">{s.title} <span className="text-xs text-sky-500">({s.estimated_time_hours || '—'} hrs)</span></div>
-            <div className="text-sm text-sky-700">{s.description}</div>
-            {s.resources?.length > 0 && (
-              <ul className="text-xs mt-1">
-                {s.resources.map((r, idx) => (
-                  <li key={idx}><a className="underline" href={r.url} target="_blank" rel="noreferrer">{r.name}</a></li>
-                ))}
-              </ul>
+    <div className="bg-white  border-l-4 shadow-lg border-sky-600 p-10">
+      <h3 className="text-xl font-bold text-gray-900 mb-2">{path.title}</h3>
+      <div className="text-sm text-gray-600 mb-4">
+        Level: {path.level} • Duration: {path.duration_weeks} weeks
+      </div>
+
+      <div className="space-y-4">
+        {path.steps?.map((step, stepIndex) => (
+          <div key={stepIndex} className="border-l-2 border-blue-200 pl-4">
+            <h4 className="font-semibold text-gray-800">
+              {step.title}
+              <span className="text-sm text-blue-600 ml-2">
+                ({step.estimated_time_hours || "?"} hours)
+              </span>
+            </h4>
+            <p className="text-gray-600 text-sm mt-1">{step.description}</p>
+
+            {step.resources?.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm font-medium text-gray-700">Resources:</p>
+                <ul className="text-sm text-blue-600 mt-1 space-y-1">
+                  {step.resources.map((resource, resIndex) => (
+                    <li key={resIndex}>
+                      <a
+                        href={resource.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline"
+                      >
+                        {resource.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
-            {s.why && <div className="text-xs text-sky-500 mt-1">Why: {s.why}</div>}
-          </li>
+          </div>
         ))}
-      </ol>
-    </article>
-  )
+      </div>
+    </div>
+  );
 }
