@@ -1,0 +1,1 @@
+Utilities folder — keep reusable server/client helpers here.
