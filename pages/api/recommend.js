@@ -16,7 +16,7 @@ const API_CONFIG = {
       fallback: "meta-llama/llama-3.1-8b-instruct:free",
     },
     headers: {
-      "HTTP-Referer": "https://localhost:3000",
+      "HTTP-Referer": "https://learners-pathway.vercel.app",
       "X-Title": "Learning Path Recommender",
     },
   },
