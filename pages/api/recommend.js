@@ -22,6 +22,9 @@ const API_CONFIG = {
   },
 };
 
+// Enable detailed logging for debugging (set to false in production)
+const DEBUG_MODE = process.env.NODE_ENV === "development";
+
 // Function calling schema (reusable)
 const LEARNING_PATH_FUNCTION_SCHEMA = {
   name: "generate_learning_paths",
@@ -95,11 +98,30 @@ CRITICAL REQUIREMENTS:
 - Focus on practical, project-based learning
 - Explain the "why" behind each step for motivation
 
-FORMAT: Structured JSON with paths containing steps with resources.
+REQUIRED JSON FORMAT - Return ONLY valid JSON, no markdown:
+{
+  "paths": [
+    {
+      "title": "Path Name",
+      "level": "beginner/intermediate/advanced",
+      "duration_weeks": 8,
+      "steps": [
+        {
+          "title": "Step Title",
+          "description": "Detailed description",
+          "estimated_time_hours": 15,
+          "resources": [
+            {"name": "Resource Name", "url": "https://..."}
+          ],
+          "why": "Why this step matters"
+        }
+      ]
+    }
+  ]
+}
 `;
 }
 
-// mock response incase api fails
 function createMockResponse(skills, goal, experience_level) {
   return {
     paths: [
@@ -187,6 +209,8 @@ async function callAIProvider(
     ...(config.headers || {}),
   };
 
+  if (DEBUG_MODE) console.log(`[${provider}] Calling API...`);
+
   try {
     const response = await fetch(config.url, {
       method: "POST",
@@ -196,45 +220,101 @@ async function callAIProvider(
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+      if (DEBUG_MODE) {
+        console.error(
+          `[${provider}] HTTP ${response.status}:`,
+          errorText.substring(0, 200)
+        );
+      }
+      throw new Error(
+        `HTTP ${response.status}: ${errorText.substring(0, 100)}`
+      );
+    }
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const textResponse = await response.text();
+      if (DEBUG_MODE) {
+        console.error(
+          `[${provider}] Non-JSON response:`,
+          textResponse.substring(0, 200)
+        );
+      }
+      throw new Error(
+        `Expected JSON but received: ${contentType || "unknown"}`
+      );
     }
 
     const data = await response.json();
 
     if (data.error) {
+      if (DEBUG_MODE) console.error(`[${provider}] API error:`, data.error);
       throw new Error(data.error.message || `API error from ${provider}`);
     }
 
     return parseAIResponse(data, provider);
   } catch (error) {
-    console.error(`API call failed:`, error.message);
+    if (DEBUG_MODE) console.error(`[${provider}] Failed:`, error.message);
     throw error;
   }
 }
 
 function parseAIResponse(data, provider) {
-  // Try function call response first
+  // Try function call response first (OpenAI with function calling)
   if (data.choices?.[0]?.message?.function_call?.arguments) {
-    const parsed = JSON.parse(data.choices[0].message.function_call.arguments);
-    if (isValidResponse(parsed)) return parsed;
+    try {
+      const parsed = JSON.parse(
+        data.choices[0].message.function_call.arguments
+      );
+      if (isValidResponse(parsed)) {
+        if (DEBUG_MODE)
+          console.log(`[${provider}]  Function call response validated`);
+        return parsed;
+      }
+    } catch (e) {
+      if (DEBUG_MODE)
+        console.warn(`[${provider}] Function call parse failed:`, e.message);
+    }
   }
 
-  // Try direct content response
+  // Try direct content response (standard chat completion)
   if (data.choices?.[0]?.message?.content) {
     try {
       const content = data.choices[0].message.content;
-      // Extract JSON if it's wrapped in code blocks
+      // Extract JSON if it's wrapped in code blocks or has extra text
       const jsonMatch =
         content.match(/```json\n([\s\S]*?)\n```/) || content.match(/{[\s\S]*}/);
       const jsonString = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content;
       const parsed = JSON.parse(jsonString);
-      if (isValidResponse(parsed)) return parsed;
+
+      // Normalize response format - handle different key names
+      let normalized = parsed;
+      if (parsed.learning_paths && !parsed.paths) {
+        if (DEBUG_MODE)
+          console.log(`[${provider}] Converting learning_paths → paths`);
+        normalized = { paths: parsed.learning_paths };
+      }
+
+      if (isValidResponse(normalized)) {
+        if (DEBUG_MODE)
+          console.log(`[${provider}]  Content response validated`);
+        return normalized;
+      }
+
+      if (DEBUG_MODE) {
+        console.warn(`[${provider}] Validation failed:`, {
+          hasPaths: !!normalized?.paths,
+          pathsCount: normalized?.paths?.length,
+          hasSteps: !!normalized?.paths?.[0]?.steps,
+          stepsCount: normalized?.paths?.[0]?.steps?.length,
+        });
+      }
     } catch (parseError) {
-      console.warn(`${provider} JSON parse failed, using structured fallback`);
+      if (DEBUG_MODE)
+        console.warn(`[${provider}] JSON parse failed:`, parseError.message);
     }
   }
 
-  // Final fallback
   throw new Error(`Invalid response format from ${provider}`);
 }
 
@@ -263,6 +343,7 @@ export default async function handler(req, res) {
 
     // Validate request body
     const { skills, goal, experience_level } = req.body || {};
+
     if (!skills || !goal) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -275,14 +356,27 @@ export default async function handler(req, res) {
     const { OPENAI_KEY, OPENROUTER_KEY } = getApiKeys();
     const hasValidKeys = OPENAI_KEY || OPENROUTER_KEY;
 
+    if (DEBUG_MODE) {
+      console.log("\n=== Learning Path API Request ===");
+      console.log("Skills:", skills);
+      console.log("Goal:", goal);
+      console.log("Level:", experience_level);
+      console.log("API Keys:", {
+        openai: !!OPENAI_KEY,
+        openrouter: !!OPENROUTER_KEY,
+      });
+    }
+
+    // Use mock data if no API keys available
     if (!hasValidKeys) {
-      console.warn("No API keys found, using mock data");
+      if (DEBUG_MODE) console.warn("⚠ No API keys found, using mock data");
       const mockResponse = createMockResponse(skills, goal, experience_level);
-      return res.status(200).json(mockResponse);
+      return res.status(200).json({ ...mockResponse, _source: "mock" });
     }
 
     const prompt = createPrompt(skills, goal, experience_level);
     let result;
+    let successfulProvider = null;
 
     // Try providers in order of preference
     const providers = [
@@ -299,19 +393,28 @@ export default async function handler(req, res) {
             prompt,
             provider.useFunctionCalling
           );
-          break; // Exit loop if successful
+          successfulProvider = provider.name;
+          if (DEBUG_MODE) console.log(` Success with ${provider.name}`);
+          break;
         } catch (error) {
-          console.warn(`${provider.name} failed:`, error.message);
+          if (DEBUG_MODE)
+            console.warn(` ${provider.name} failed, trying next...`);
         }
       }
     }
 
+    // Fallback to mock data if all providers fail
     if (!result) {
+      if (DEBUG_MODE) console.warn("⚠ All providers failed, using mock data");
       result = createMockResponse(skills, goal, experience_level);
+      successfulProvider = "mock";
     }
-    return res.status(200).json(result);
+
+    if (DEBUG_MODE) console.log(`Response source: ${successfulProvider}\n`);
+
+    return res.status(200).json({ ...result, _source: successfulProvider });
   } catch (error) {
-    console.error("Unexpected error in API handler:", error);
+    console.error("API handler error:", error);
     return res.status(500).json({
       error: "Internal server error",
       message: error.message,
