@@ -12,8 +12,9 @@
 **How to run**
 1. Install: `npm install`
 2. Set environment variable: `OPENAI_API_KEY` (or modify the API route to use another provider)
-3. Run dev server: `npm run dev`
-4. Open `http://localhost:3000`
+   alternative https://openrouter.ai/ -  API key - `OPENROUTER_API_KEY`
+4. Run dev server: `npm run dev`
+5. Open `http://localhost:3000`
 
 **Notes**
 - The repository includes a working server-side API integration scaffold but **does not** include an API key. Replace the API call with your preferred provider or mock.
